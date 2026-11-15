@@ -36,6 +36,16 @@ jobs:
           az acr login --name "${{ vars.ACR_NAME }}"
 
 
+      - name: Test ACR image push
+        run: |
+          ACR="${{ vars.ACR_NAME }}"
+          docker pull nginx:alpine
+          docker tag nginx:alpine \
+            "$ACR.azurecr.io/oidc-test:${{ github.sha }}"
+          docker push \
+            "$ACR.azurecr.io/oidc-test:${{ github.sha }}"
+
+
 #      - name: Build Docker Image # build docker image - tag is commit sha
 #        run: |
 #          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }} .
