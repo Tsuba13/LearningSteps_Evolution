@@ -11,9 +11,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-            fetch-depth: 0
+        uses: actions/checkout@v4
 
 
       - name: Login to azure using OIDC
@@ -25,8 +23,9 @@ jobs:
 
 
       - name: Verify Azure authentication
-              run: |
-                az account show --output table
+        run: |
+          az account show --output table
+
       
       - name: Test ACR authentication
         run: |
