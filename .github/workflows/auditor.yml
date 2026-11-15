@@ -33,7 +33,10 @@ jobs:
 
       - name: Build Docker Image # build docker image - tag is commit sha
         run: |
-          docker build -t ${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }} .
+          docker build \
+            -t ${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }} \
+            -f api/Dockerfile \
+            api/
 
 
       - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
