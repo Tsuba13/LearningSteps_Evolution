@@ -1,4 +1,4 @@
-name: Security Gatekeeper Pipeline
+name: Security Auditing Pipeline
 
 on:
   push:
@@ -25,44 +25,28 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-
-      - name: Verify Azure authentication
-        run: |
-          az account show --output table
-
-      
-      - name: Test ACR authentication
+    
+      - name: ACR authentication
         run: |
           az acr login --name "${{ vars.ACR_NAME }}"
 
 
-      - name: Test ACR image push
+      - name: Build Docker Image # build docker image - tag is commit sha
         run: |
-          ACR="${{ vars.ACR_NAME }}"
-          docker pull nginx:alpine
-          docker tag nginx:alpine \
-            "$ACR.azurecr.io/oidc-test:${{ github.sha }}"
-          docker push \
-            "$ACR.azurecr.io/oidc-test:${{ github.sha }}"
+          docker build -t ${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }} .
 
 
-#      - name: Build Docker Image # build docker image - tag is commit sha
-#        run: |
-#          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }} .
+      - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: '${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
 
 
-#      - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
-#        uses: aquasecurity/trivy-action@master
-#        with:
-#          image-ref: '${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}'
-#          format: 'table'
-#          exit-code: '1'
-#          severity: 'CRITICAL'
-#          ignore-unfixed: true
-
-
-#      - name: Push Image to ACR
-#        if: success()
-#        run: |
-#          docker push ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}
-#          echo "Success! Image pushed to Azure."
+      - name: Push Image to ACR
+        if: success()
+        run: |
+          docker push ${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }}
+          echo "Success! Image pushed to Azure."
