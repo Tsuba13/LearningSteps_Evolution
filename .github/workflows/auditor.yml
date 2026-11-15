@@ -16,33 +16,42 @@ jobs:
             fetch-depth: 0
 
 
-      - name: Login to ACR
-        uses: docker/login-action@v4
+      - name: Login to azure using OIDC
+        uses: azure/login@v3
         with:
-          registry: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
 
-      - name: Build Docker Image # build docker image - tag is commit sha
+      - name: Verify Azure authentication
+              run: |
+                az account show \
+                  --query "{Subscription:name, Tenant:tenantId}" \
+                  --output table
+      
+      - name: Test ACR authentication
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }} .
+          az acr login --name "${{ vars.ACR_NAME }}"
 
 
-      - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL'
-          ignore-unfixed: true
+#      - name: Build Docker Image # build docker image - tag is commit sha
+#        run: |
+#          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }} .
 
-      # 5. Push to ACR
-      # This step only runs if Step 4 (Trivy) succeeded.
-      # On the 'vulnerable' branch, this step should naturally SKIP/CANCEL.
-      - name: Push Image to ACR
-        if: success()
-        run: |
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}
-          echo "Success! Image pushed to Azure."
+
+#      - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
+#        uses: aquasecurity/trivy-action@master
+#        with:
+#          image-ref: '${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}'
+#          format: 'table'
+#          exit-code: '1'
+#          severity: 'CRITICAL'
+#          ignore-unfixed: true
+
+
+#      - name: Push Image to ACR
+#        if: success()
+#        run: |
+#          docker push ${{ secrets.ACR_LOGIN_SERVER }}/security-gatekeeper-demo:${{ github.sha }}
+#          echo "Success! Image pushed to Azure."
