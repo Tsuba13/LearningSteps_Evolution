@@ -2,7 +2,7 @@ name: Security Gatekeeper Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 permissions:
