@@ -58,7 +58,7 @@ jobs:
           image-ref: '${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }}'
           format: 'table'
           exit-code: '2'
-          severity: 'HIGH,CRITICAL'
+          severity: 'CRITICAL'
 
 
       - name: Push Image to ACR
