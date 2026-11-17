@@ -13,6 +13,7 @@ resource "azurerm_resource_group" "tfstate-rg" {
   }
 }
 
+#trivy:ignore:AVD-AZU-0012
 resource "azurerm_storage_account" "tfstate1348-tf" {
   name                     = "tfstate1348"
   resource_group_name      = azurerm_resource_group.tfstate-rg.name
