@@ -31,6 +31,17 @@ jobs:
           az acr login --name "${{ vars.ACR_NAME }}"
 
 
+      - name: Run Trivy scan on all files # scan everything in the repo for known vulnerabilities in dependencies, leaked secrets, and terraform misconfigurations - block if critical issues are found
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,misconfig'
+          format: 'table'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
+
       - name: Build Docker Image # build docker image - tag is commit sha
         run: |
           docker build \
@@ -39,13 +50,13 @@ jobs:
             api/
 
 
-      - name: Run Trivy Security Scan # push to ACR - block if critical issues are found
+      - name: Run Trivy scan on Docker image # push to ACR - block if critical issues are found
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: '${{ vars.ACR_NAME }}.azurecr.io/learningsteps:${{ github.sha }}'
           format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL'
+          exit-code: '2'
+          severity: 'HIGH,CRITICAL'
 
 
       - name: Push Image to ACR
